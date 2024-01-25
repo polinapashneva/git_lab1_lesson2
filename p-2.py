@@ -171,9 +171,20 @@ def promo():
         clock.tick(FPS)
 
 
+class Stolb(pygame.sprite.Sprite):
+    def __init__(self, pos, b, r):
+        super().__init__(tiles_group, all_sprites)
+        mr = {'m': 2,
+             's': 4,
+             'b': 6}
+        self.image = pygame.transform.scale(load_image('б-столб.png'), (30, b * mr[r]))
+        self.image.set_colorkey((255, 255, 255))
+        self.rect = self.image.get_rect().move(pos[0], pos[1])
+
+
 class Tile(pygame.sprite.Sprite):
     def __init__(self, pos, a):
-        super().__init__(tiles_group, all_sprites)
+        super().__init__(tiles_group, plat_group, all_sprites)
         self.image = pygame.transform.scale(load_image('платформа.png'), (a, 30))
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect().move(pos[0], pos[1])
@@ -203,6 +214,7 @@ all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 char_group = pygame.sprite.Group()
 fon_group = pygame.sprite.Group()
+plat_group = pygame.sprite.Group()
 
 
 def generate_level_1():
@@ -223,11 +235,15 @@ def generate_level_1():
     xc = round(WIDTH / 10)
     crd = [(xc, kh * 5), (xc * 2, kh * 4), (xc * 3, kh * 3), (xc * 5, kh * 3), (xc * 6, kh * 2), (xc * 7, kh),
            (xc * 7, kh * 5), (xc * 8, kh * 4), (xc * 9, kh * 3), (xc * 10, kh * 2), (xc * 10, kh * 5),
-           (xc * 10, kh), (xc * 10, kh * 4), (xc * 12, kh * 3), (xc * 15, kh * 5), (xc * 15, kh * 3),
-           (xc * 15, kh), (xc * 16, kh * 4), (xc * 16, kh * 2), (xc * 17, kh), (xc * 18, kh * 2),
-           (xc * 18, kh * 4), (xc * 19, kh * 3), (xc * 19, kh * 5), (xc * 20, kh * 4)]
+           (xc * 11, kh), (xc * 11, kh * 4), (xc * 13, kh * 3), (xc * 16, kh * 5), (xc * 16, kh * 3),
+           (xc * 16, kh), (xc * 17, kh * 4), (xc * 17, kh * 2), (xc * 18, kh), (xc * 19, kh * 2),
+           (xc * 19, kh * 4), (xc * 20, kh * 3), (xc * 20, kh * 5), (xc * 21, kh * 4)]
     for i in crd:
         Tile(i, xc)
+    crd = [(xc * 4 - 15, kh * 3 + 15, 's'), (xc * 5 + 15, kh * 3 + 15, 's'), (xc * 11 - 15, 0 + 15, 'm'),
+           (xc * 12 - 15, kh * 4 + 15, 's'), (xc * 19 - 15, kh + 15, 'b'), (xc * 21, kh * 3, 's'), ]
+    for i in crd:
+        Stolb(i[0:-1], kh, i[-1])
     new_player = Player(xc, kh, z)
     fon = Fon(WIDTH * 3)
     # вернем игрока, а также размер поля в клетках
@@ -247,8 +263,7 @@ class Camera:
 
     # позиционировать камеру на объекте target
     def update(self, target):
-        self.dx = -(target.rect.x + target.rect.w // 2 - Z)
-        self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT)
+        self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
 
 
 try:
@@ -269,7 +284,7 @@ try:
     zast()
     print(1)
     player, level_x, level_y, fon = generate_level_1()
-    # camera = Camera()
+    camera = Camera()
     running = True
     print(2)
 
@@ -279,8 +294,12 @@ try:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             player.rect.x -= 7
+            if pygame.sprite.spritecollideany(player, tiles_group):
+                player.rect.x += 7
         elif keys[pygame.K_RIGHT]:
             player.rect.x += 7
+            if pygame.sprite.spritecollideany(player, tiles_group):
+                player.rect.x -= 7
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -290,24 +309,29 @@ try:
                     if t % 2 != 0:
                         t += 1
                     r = True
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                pass
         if r:
             p += 1
             if p <= t // 2:
                 player.rect.y -= 9
+                if pygame.sprite.spritecollideany(player, tiles_group):
+                    player.rect.y += 9
             else:
                 player.rect.y += 9
+                if pygame.sprite.spritecollideany(player, tiles_group):
+                    player.rect.y -= 9
             if p == t:
                 p = 0
                 r = False
+        if not pygame.sprite.spritecollideany(player, plat_group):
+            player.rect.y -= 9
+            if player.rect.y < Z - 30:
+                player.rect.y += 9
 
-
-        # # изменяем ракурс камеры
-        # camera.update(player)
-        # # обновляем положение всех спрайтов
-        # for sprite in all_sprites:
-        #     camera.apply(sprite)
+        # изменяем ракурс камеры
+        camera.update(player)
+        # обновляем положение всех спрайтов
+        for sprite in all_sprites:
+            camera.apply(sprite)
 
         screen.fill((0,0,0))
         fon_group.draw(screen)
