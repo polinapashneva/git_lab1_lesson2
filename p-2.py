@@ -290,6 +290,8 @@ try:
                     if t % 2 != 0:
                         t += 1
                     r = True
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                pass
         if r:
             p += 1
             if p <= t // 2:
