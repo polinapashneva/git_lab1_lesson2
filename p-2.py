@@ -268,15 +268,12 @@ class Camera:
 
 try:
     pygame.init()
-    pygame.display.set_caption('Голос сердца')
+    pygame.display.set_caption('')
     infoObject = pygame.display.Info()
     size = width, height = WIDTH, HEIGHT = infoObject.current_w, infoObject.current_h
     screen = pygame.display.set_mode(size)
     clock = pygame.time.Clock()
     fps = 50
-    tile_images = {
-        '1': load_image('заставка.png')
-    }
     player_image = load_image('челик стоит.png', -1)
     tile_width = tile_height = 50
 
