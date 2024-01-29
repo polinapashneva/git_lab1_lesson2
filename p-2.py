@@ -175,8 +175,8 @@ class Stolb(pygame.sprite.Sprite):
     def __init__(self, pos, b, r):
         super().__init__(tiles_group, all_sprites)
         mr = {'m': 2,
-             's': 4,
-             'b': 6}
+              's': 4,
+              'b': 6}
         self.image = pygame.transform.scale(load_image('б-столб.png'), (30, b * mr[r]))
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect().move(pos[0], pos[1])
@@ -185,18 +185,23 @@ class Stolb(pygame.sprite.Sprite):
 class Tile(pygame.sprite.Sprite):
     def __init__(self, pos, a):
         super().__init__(tiles_group, plat_group, all_sprites)
-        self.image = pygame.transform.scale(load_image('платформа.png'), (a, 30))
+        self.image = pygame.transform.scale(load_image('платформа.png'), (a, 29))
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect().move(pos[0], pos[1])
+
+
+class Zem(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__(tiles_group, plat_group, all_sprites)
+        self.image = pygame.Surface([WIDTH * 3, 1])
+        self.rect = pygame.Rect(1, HEIGHT - (KH // 3 + KH // 12), WIDTH * 3, 1)
 
 
 class Player(pygame.sprite.Sprite):
     def __init__(self, w, h, z):
         super().__init__(char_group, all_sprites)
-        print(w, h)
-        self.image = pygame.transform.scale(load_image('челик стоит.png'), (w - 45, h - 30))
+        self.image = pygame.transform.scale(load_image('челик стоит.png'), (w - 55, h - 40))
         self.image.set_colorkey((255, 255, 255))
-        print(HEIGHT)
         self.rect = self.image.get_rect().move(70, HEIGHT - h + 50 - z)
 
 
@@ -222,32 +227,31 @@ def generate_level_1():
     new_player = None
     if WIDTH <= 5356:
         m = round(5356 / WIDTH / 3)
-        h = round(1080 / m)
         z = round(75 / m)
     else:
         m = WIDTH / 5356 / 3
-        h = round(1080 * m)
         z = round(75 * m)
-        m = round(m)
     Z = z
     kh = round((HEIGHT - z) / 7) + 20
     KH = kh
     xc = round(WIDTH / 10)
     crd = [(xc, kh * 5), (xc * 2, kh * 4), (xc * 3, kh * 3), (xc * 5, kh * 3), (xc * 6, kh * 2), (xc * 7, kh),
            (xc * 7, kh * 5), (xc * 8, kh * 4), (xc * 9, kh * 3), (xc * 10, kh * 2), (xc * 10, kh * 5),
-           (xc * 11, kh), (xc * 11, kh * 4), (xc * 13, kh * 3), (xc * 16, kh * 5), (xc * 16, kh * 3),
+           (xc * 11, kh * 4), (xc * 13, kh * 3), (xc * 16, kh * 5), (xc * 16, kh * 3),
            (xc * 16, kh), (xc * 17, kh * 4), (xc * 17, kh * 2), (xc * 18, kh), (xc * 19, kh * 2),
-           (xc * 19, kh * 4), (xc * 20, kh * 3), (xc * 20, kh * 5), (xc * 21, kh * 4)]
+           (xc * 19, kh * 4), (xc * 20 + 30, kh * 3), (xc * 20 + 30, kh * 5), (xc * 21, kh * 4)]
     for i in crd:
         Tile(i, xc)
-    crd = [(xc * 4 - 15, kh * 3 + 15, 's'), (xc * 5 + 15, kh * 3 + 15, 's'), (xc * 11 - 15, 0 + 15, 'm'),
-           (xc * 12 - 15, kh * 4 + 15, 's'), (xc * 19 - 15, kh + 15, 'b'), (xc * 21, kh * 3, 's'), ]
+    crd = [(xc * 4 - 25, kh * 3 + 15, 's'), (xc * 5 + 10, kh * 3 + 15, 's'), (xc * 11 - 15, 0 + 15, 'm'),
+           (xc * 12 - 25, kh * 4 + 15, 's'), (xc * 13, kh * 3 + 15, 's'), (xc * 19 - 25, kh + 15, 'b'),
+           (xc * 21, kh * 3, 's'), ]
     for i in crd:
         Stolb(i[0:-1], kh, i[-1])
     new_player = Player(xc, kh, z)
     fon = Fon(WIDTH * 3)
+    zem = Zem()
     # вернем игрока, а также размер поля в клетках
-    return new_player, WIDTH, HEIGHT, fon
+    return new_player, WIDTH, HEIGHT, fon, zem
 
 
 class Camera:
@@ -266,6 +270,12 @@ class Camera:
         self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
 
 
+def up():
+
+    if pygame.sprite.spritecollideany(player, plat_group):
+        return pygame.sprite.spritecollideany(player, plat_group).rect.y
+
+
 try:
     pygame.init()
     pygame.display.set_caption('')
@@ -280,23 +290,28 @@ try:
     start_screen()
     zast()
     print(1)
-    player, level_x, level_y, fon = generate_level_1()
+    player, level_x, level_y, fon, zem = generate_level_1()
     camera = Camera()
     running = True
     print(2)
 
     p = 0
+    s = 0
     r = False
     while running:
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             player.rect.x -= 7
+            s -= 7
             if pygame.sprite.spritecollideany(player, tiles_group):
                 player.rect.x += 7
+                s += 7
         elif keys[pygame.K_RIGHT]:
             player.rect.x += 7
+            s += 7
             if pygame.sprite.spritecollideany(player, tiles_group):
                 player.rect.x -= 7
+                s -= 7
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -306,6 +321,10 @@ try:
                     if t % 2 != 0:
                         t += 1
                     r = True
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if 60 <= event.pos[0] <= 120 and 60 <= event.pos[1] <= 120:
+                    player.rect.x -= s
+                    s = 0
         if r:
             p += 1
             if p <= t // 2:
@@ -319,10 +338,13 @@ try:
             if p == t:
                 p = 0
                 r = False
-        if not pygame.sprite.spritecollideany(player, plat_group):
-            player.rect.y -= 9
-            if player.rect.y < Z - 30:
-                player.rect.y += 9
+        if not pygame.sprite.spritecollideany(player, plat_group) and not r:
+            player.rect.y += 9
+            try:
+                if player.rect.y + player.rect.h > int(up()):
+                    player.rect.y -= 9
+            except Exception as ex:
+                pass
 
         # изменяем ракурс камеры
         camera.update(player)
@@ -330,10 +352,19 @@ try:
         for sprite in all_sprites:
             camera.apply(sprite)
 
-        screen.fill((0,0,0))
+        screen.fill((0, 0, 0))
         fon_group.draw(screen)
         tiles_group.draw(screen)
         char_group.draw(screen)
+
+        if 60 <= pygame.mouse.get_pos()[0] <= 120 and 60 <= pygame.mouse.get_pos()[1] <= 120:
+            image = pygame.transform.scale(load_image('назад-2.png'), (60, 60))
+            image.set_colorkey((255, 255, 255))
+            screen.blit(image, (60, 60))
+        else:
+            image = pygame.transform.scale(load_image('назад-1.png'), (60, 60))
+            image.set_colorkey((255, 255, 255))
+            screen.blit(image, (60, 60))
 
         pygame.display.flip()
         clock.tick(fps)
