@@ -200,7 +200,7 @@ class Coins(pygame.sprite.Sprite):
 
 class Zem(pygame.sprite.Sprite):
     def __init__(self):
-        super().__init__(tiles_group, plat_group, all_sprites)
+        super().__init__(tiles_group, zem_group, plat_group, all_sprites)
         self.image = pygame.Surface([WIDTH * 3, 1])
         self.rect = pygame.Rect(1, HEIGHT - (KH // 3 + KH // 12), WIDTH * 3, 1)
 
@@ -209,6 +209,22 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, w, h, z):
         super().__init__(char_group, all_sprites)
         self.image = pygame.transform.scale(load_image('челик стоит.png'), (w - 55, h - 40))
+        self.image.set_colorkey((255, 255, 255))
+        self.rect = self.image.get_rect().move(70, HEIGHT - h + 50 - z)
+
+
+class Prun(pygame.sprite.Sprite):
+    def __init__(self, w, h, z):
+        super().__init__(charrun_group, all_sprites)
+        self.image = pygame.transform.scale(load_image('челик бежит.png'), (w - 55, h - 40))
+        self.image.set_colorkey((255, 255, 255))
+        self.rect = self.image.get_rect().move(70, HEIGHT - h + 50 - z)
+
+
+class Prunl(pygame.sprite.Sprite):
+    def __init__(self, w, h, z):
+        super().__init__(charrunl_group, all_sprites)
+        self.image = pygame.transform.scale(load_image('челик бежит-2.png'), (w - 55, h - 40))
         self.image.set_colorkey((255, 255, 255))
         self.rect = self.image.get_rect().move(70, HEIGHT - h + 50 - z)
 
@@ -226,9 +242,12 @@ class Fon(pygame.sprite.Sprite):
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 char_group = pygame.sprite.Group()
+charrun_group = pygame.sprite.Group()
 fon_group = pygame.sprite.Group()
 plat_group = pygame.sprite.Group()
 money_group = pygame.sprite.Group()
+zem_group = pygame.sprite.Group()
+charrunl_group = pygame.sprite.Group()
 
 
 def generate_level_1():
@@ -260,10 +279,12 @@ def generate_level_1():
     for i in crd:
         Coins(i[0], i[1])
     new_player = Player(xc, kh, z)
+    runp = Prun(xc, kh, z)
+    runpl = Prunl(xc, kh, z)
     fon = Fon(WIDTH * 3)
     zem = Zem()
     # вернем игрока, а также размер поля в клетках
-    return new_player, WIDTH, HEIGHT, fon, zem
+    return new_player, runp, runpl, WIDTH, HEIGHT, fon, zem
 
 
 class Camera:
@@ -305,24 +326,31 @@ try:
 
     start_screen()
     zast()
-    print(1)
-    player, level_x, level_y, fon, zem = generate_level_1()
+    *char, level_x, level_y, fon, zem = generate_level_1()
     camera = Camera()
     running = True
-    print(2)
 
     p = 0
     s = 0
     r = False
+    lor = 1
+    cor = [70, HEIGHT - KH + 50 - Z]
+    cor = [WIDTH // 2, HEIGHT - KH + 50 - Z]
     while running:
+        player = char[0]
+        lor = 0
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
+            player = char[2]
+            lor = 2
             player.rect.x -= 7
             s -= 7
             if pygame.sprite.spritecollideany(player, tiles_group):
                 player.rect.x += 7
                 s += 7
         elif keys[pygame.K_RIGHT]:
+            player = char[1]
+            lor = 1
             player.rect.x += 7
             s += 7
             if pygame.sprite.spritecollideany(player, tiles_group):
@@ -333,6 +361,7 @@ try:
                 running = False
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
+                    player = char[1]
                     t = KH // 9 * 2 + 5
                     if t % 2 != 0:
                         t += 1
@@ -342,6 +371,7 @@ try:
                     player.rect.x -= s
                     s = 0
         if r:
+            player = char[lor]
             p += 1
             if p <= t // 2:
                 player.rect.y -= 9
@@ -365,6 +395,10 @@ try:
             MONEY += 5
             mcoin()
 
+        cor = [player.rect.x, player.rect.y]
+        for i in range(3):
+            char[i].rect.x, char[i].rect.y = cor[0], cor[1]
+
 
         # изменяем ракурс камеры
         camera.update(player)
@@ -375,8 +409,13 @@ try:
         screen.fill((0, 0, 0))
         fon_group.draw(screen)
         tiles_group.draw(screen)
-        char_group.draw(screen)
         money_group.draw(screen)
+        if player == char[0]:
+            char_group.draw(screen)
+        elif player == char[1]:
+            charrun_group.draw(screen)
+        else:
+            charrunl_group.draw(screen)
 
         if 60 <= pygame.mouse.get_pos()[0] <= 120 and 60 <= pygame.mouse.get_pos()[1] <= 120:
             image = pygame.transform.scale(load_image('назад-2.png'), (60, 60))
