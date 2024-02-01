@@ -190,6 +190,14 @@ class Tile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect().move(pos[0], pos[1])
 
 
+class Coins(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__(money_group, all_sprites)
+        self.image = pygame.transform.scale(load_image('монета.png'), (KH - 30, KH - 30))
+        self.image.set_colorkey((255, 255, 255))
+        self.rect = self.image.get_rect().move(x, y)
+
+
 class Zem(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__(tiles_group, plat_group, all_sprites)
@@ -220,6 +228,7 @@ tiles_group = pygame.sprite.Group()
 char_group = pygame.sprite.Group()
 fon_group = pygame.sprite.Group()
 plat_group = pygame.sprite.Group()
+money_group = pygame.sprite.Group()
 
 
 def generate_level_1():
@@ -247,6 +256,9 @@ def generate_level_1():
            (xc * 21, kh * 3, 's'), ]
     for i in crd:
         Stolb(i[0:-1], kh, i[-1])
+    crd = [(xc * 5 + 45, kh * 5 + 30), (xc * 10 + 15, kh + 15), (xc * 19 + 15, kh * 5 + 30)]
+    for i in crd:
+        Coins(i[0], i[1])
     new_player = Player(xc, kh, z)
     fon = Fon(WIDTH * 3)
     zem = Zem()
@@ -271,9 +283,13 @@ class Camera:
 
 
 def up():
-
     if pygame.sprite.spritecollideany(player, plat_group):
         return pygame.sprite.spritecollideany(player, plat_group).rect.y
+
+
+def mcoin():
+    if pygame.sprite.spritecollideany(player, money_group):
+        pygame.sprite.spritecollideany(player, money_group).kill()
 
 
 try:
@@ -345,6 +361,10 @@ try:
                     player.rect.y -= 9
             except Exception as ex:
                 pass
+        if pygame.sprite.spritecollideany(player, money_group):
+            MONEY += 5
+            mcoin()
+
 
         # изменяем ракурс камеры
         camera.update(player)
@@ -356,6 +376,7 @@ try:
         fon_group.draw(screen)
         tiles_group.draw(screen)
         char_group.draw(screen)
+        money_group.draw(screen)
 
         if 60 <= pygame.mouse.get_pos()[0] <= 120 and 60 <= pygame.mouse.get_pos()[1] <= 120:
             image = pygame.transform.scale(load_image('назад-2.png'), (60, 60))
