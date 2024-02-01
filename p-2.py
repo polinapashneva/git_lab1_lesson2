@@ -32,7 +32,7 @@ def terminate():
     sys.exit()
 
 
-def start_screen():
+def start_screen(): # Создаем стартовую заставку, которую можно закрыть нажатием мыши
     fon = pygame.transform.scale(load_image('заставочка.png'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
 
@@ -47,13 +47,14 @@ def start_screen():
         clock.tick(FPS)
 
 
-def zast():
+def zast(): # Создаем Меню
     fon = pygame.transform.scale(load_image('заставка.png'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
-    intro_text = ['ИГРАТЬ', str(MONEY), "ВЫХОД"]
+    intro_text = ['ИГРАТЬ', str(MONEY), "ВЫХОД"] # Список кнопок
     text_coord = 50
     coordkn = []
     for line in intro_text:
+        # Отрисовываем каждую кнопку. Кнопка "Монеты" будет с символом перед текстом, поэтому отрисуем ее отдельно
         if line != str(MONEY):
             text_coord += 10
             pygame.draw.rect(screen, (120, 132, 73), (60, text_coord, WIDTH // 5, 60))
@@ -84,7 +85,7 @@ def zast():
 
     c = [[]]
     while True:
-        if 60 <= pygame.mouse.get_pos()[0] <= 60 + WIDTH // 5:
+        if 60 <= pygame.mouse.get_pos()[0] <= 60 + WIDTH // 5: # Если навести мышь на кнопку, цвет текста изменится
             for i in coordkn:
                 if i[1] <= pygame.mouse.get_pos()[1] <= i[2]:
                     c.append(i[::])
@@ -112,7 +113,7 @@ def zast():
                         image.set_colorkey((255, 255, 255))
                         screen.blit(image, (61, i[1] + 1))
         else:
-            if c[-1] != []:
+            if c[-1] != []: # Красим кнопки обратно в черный, когда мышка сдвигается
                 font = pygame.font.SysFont(None, 50)
                 string_rendered = font.render(intro_text[coordkn.index(c[-1])], 1, pygame.Color('black'))
                 text_coord = c[-1][1] + 12
@@ -142,6 +143,7 @@ def zast():
 
 
 def promo():
+    # Рисуем окошко для ввода промокода
     global MONEY
     pygame.draw.rect(screen, (0, 0, 0), (WIDTH // 2 - 150, HEIGHT // 2 - 50, 300, 100))
     font = pygame.font.SysFont(None, 40)
@@ -153,13 +155,13 @@ def promo():
     pc = ''
     while True:
         for event in pygame.event.get():
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN: # Заканчиваем ввод промокода
                 for i in PROMO:
                     if i[0] == pc and i[-1] == 0:
                         MONEY += int(i[1])
                         PROMO[PROMO.index(i)][-1] = 1
                     zast()
-            elif event.type == pygame.KEYDOWN:
+            elif event.type == pygame.KEYDOWN: # Показываем ввод с клавиатуры в нашем окне
                 pc = pc + str(event.unicode)
                 font = pygame.font.SysFont(None, 30)
                 string_rendered = font.render(pc, 1, pygame.Color('black'))
